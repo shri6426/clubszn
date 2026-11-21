@@ -1,4 +1,4 @@
-# CLUB SZN — Experimental Editorial Website
+# CLUB SZN 
 
 > **Youth-focused socializing & community events brand — Chennai, India.**  
 > Powered by **Mechstrek**
