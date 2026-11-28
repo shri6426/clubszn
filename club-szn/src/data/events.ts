@@ -62,7 +62,7 @@ Lock in your free Early Access RSVP below to get notified first the second dates
       'Sideline hangout zones & refreshments',
       'Exclusive SZN turf jersey drops & photo coverage',
     ],
-    imageUrl: '/gallery/img_0595.jpg',
+    imageUrl: '/events/turf-szn.jpg',
     posterColor: '#D000FF',
     tags: ['Turf', 'Social Sports', 'Football', 'Cricket', 'Music', 'Announcing Soon'],
     tickets: [
@@ -88,6 +88,7 @@ Lock in your free Early Access RSVP below to get notified first the second dates
 ];
 
 export const galleryImages = [
+  { id: 'g00', src: '/events/turf-szn.jpg', aspect: 'landscape' },
   { id: 'g01', src: '/gallery/img_0388.jpg', aspect: 'landscape' },
   { id: 'g02', src: '/gallery/img_0422.jpg', aspect: 'landscape' },
   { id: 'g03', src: '/gallery/img_0443.jpg', aspect: 'landscape' },

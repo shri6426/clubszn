@@ -120,7 +120,7 @@ Location coordinates, match details, schedules, and official dates will be annou
 
 Lock in your free Early Access RSVP below to get notified first the second dates and venue locations drop.`,
       highlights,
-      'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=1200&q=80'
+      '/events/turf-szn.jpg'
     );
     console.log('✅ Initial Event seeded: TURF SZN in Chennai, India');
   }
