@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
   Calendar,
-  MapPin,
   Download,
   Plus,
   CheckCircle2,
