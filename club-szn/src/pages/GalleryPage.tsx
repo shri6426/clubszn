@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ZoomIn, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { galleryImages } from '../data/events';
 
 export default function GalleryPage() {
@@ -98,13 +98,6 @@ export default function GalleryPage() {
                   backgroundSize: '4px 4px',
                 }}
               />
-
-              {/* Minimal Zoom Reticle on hover */}
-              <div className="absolute inset-0 bg-szn-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4">
-                <div className="w-10 h-10 border border-szn-cream/60 bg-szn-black/80 flex items-center justify-center">
-                  <ZoomIn size={16} className="text-szn-magenta" />
-                </div>
-              </div>
             </motion.div>
           ))}
         </div>

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import Navigation from './components/Navigation';
 import Footer from './components/Footer';
 import CustomCursor from './components/CustomCursor';
+import ProtectedRoute from './components/ProtectedRoute';
 import HomePage from './pages/HomePage';
 import EventsPage from './pages/EventsPage';
 import EventDetailPage from './pages/EventDetailPage';
@@ -45,11 +46,32 @@ function AppRoutes() {
           <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
           <Route path="/events" element={<PageTransition><EventsPage /></PageTransition>} />
           <Route path="/events/:slug" element={<PageTransition><EventDetailPage /></PageTransition>} />
-          <Route path="/book/:slug" element={<PageTransition><BookingPage /></PageTransition>} />
-          <Route path="/my-tickets" element={<PageTransition><MyTicketsPage /></PageTransition>} />
+          <Route
+            path="/book/:slug"
+            element={
+              <ProtectedRoute>
+                <PageTransition><BookingPage /></PageTransition>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-tickets"
+            element={
+              <ProtectedRoute>
+                <PageTransition><MyTicketsPage /></PageTransition>
+              </ProtectedRoute>
+            }
+          />
           <Route path="/gallery" element={<PageTransition><GalleryPage /></PageTransition>} />
           <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
-          <Route path="/admin" element={<PageTransition><AdminPage /></PageTransition>} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute requireAdmin>
+                <PageTransition><AdminPage /></PageTransition>
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </AnimatePresence>
       <Footer />

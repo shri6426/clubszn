@@ -15,6 +15,7 @@ import {
   ExternalLink,
   Shield,
   RefreshCw,
+  CreditCard,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getBookings, saveBooking, generateBookingId, type Booking } from '../data/bookings';
@@ -87,6 +88,15 @@ export default function AdminPage() {
   const [newAttendee, setNewAttendee] = useState({ name: '', email: '', phone: '', tier: 'EARLY ACCESS RSVP (FREE)' });
   const [loading, setLoading] = useState(false);
 
+  // Live stats from backend /api/admin/stats
+  const [stats, setStats] = useState({
+    totalRSVPs: 0,
+    actualBookingsCount: 0,
+    checkedInCount: 0,
+    totalRevenue: 0,
+    registeredUsersCount: 0,
+  });
+
   // Event editable state
   const turfEvent = events[0];
   const [venueNotice, setVenueNotice] = useState(turfEvent?.venue || 'TURF ARENA — REVEALING SOON');
@@ -153,8 +163,28 @@ export default function AdminPage() {
     setBookings(combined);
   };
 
+  // Fetch live platform statistics from backend
+  const fetchStats = async () => {
+    try {
+      const res = await authFetch('/api/admin/stats');
+      if (res.ok) {
+        const data = await res.json();
+        setStats({
+          totalRSVPs: data.totalRSVPs ?? 0,
+          actualBookingsCount: data.actualBookingsCount ?? 0,
+          checkedInCount: data.checkedInCount ?? 0,
+          totalRevenue: data.totalRevenue ?? 0,
+          registeredUsersCount: data.registeredUsersCount ?? 0,
+        });
+      }
+    } catch (err) {
+      console.warn('Admin stats API fetch failed:', err);
+    }
+  };
+
   useEffect(() => {
     loadGuestList();
+    fetchStats();
   }, []);
 
   if (!user || !isAdmin) return null;
@@ -329,38 +359,27 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Key Stats Grid */}
+      {/* Live Platform Statistics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
         <div className="border border-white/10 bg-szn-charcoal p-6 relative overflow-hidden">
           <div className="flex justify-between items-start mb-2">
-            <span className="font-grotesk text-[10px] tracking-widest uppercase text-szn-cream/40">TOTAL RSVPS</span>
+            <span className="font-grotesk text-[10px] tracking-widest uppercase text-szn-cream/40">TOTAL USERS</span>
             <Users size={16} className="text-szn-magenta" />
           </div>
-          <p className="font-anton text-4xl md:text-5xl text-szn-cream">{bookings.length + 97}</p>
+          <p className="font-anton text-4xl md:text-5xl text-szn-cream">{stats.registeredUsersCount}</p>
           <span className="font-grotesk text-[9px] tracking-wider text-szn-magenta uppercase mt-2 block">
-            100+ Milestone Active
+            Registered accounts
           </span>
         </div>
 
         <div className="border border-white/10 bg-szn-charcoal p-6 relative overflow-hidden">
           <div className="flex justify-between items-start mb-2">
-            <span className="font-grotesk text-[10px] tracking-widest uppercase text-szn-cream/40">ACTIVE EVENT</span>
+            <span className="font-grotesk text-[10px] tracking-widest uppercase text-szn-cream/40">TOTAL RSVPS</span>
             <Calendar size={16} className="text-szn-magenta" />
           </div>
-          <p className="font-anton text-2xl md:text-3xl text-szn-cream uppercase truncate">TURF SZN</p>
-          <span className="font-grotesk text-[9px] tracking-wider text-szn-cream/40 uppercase mt-2 block truncate">
-            {dateNotice}
-          </span>
-        </div>
-
-        <div className="border border-white/10 bg-szn-charcoal p-6 relative overflow-hidden">
-          <div className="flex justify-between items-start mb-2">
-            <span className="font-grotesk text-[10px] tracking-widest uppercase text-szn-cream/40">TURF ARENA</span>
-            <MapPin size={16} className="text-szn-magenta" />
-          </div>
-          <p className="font-anton text-2xl md:text-3xl text-szn-cream uppercase truncate">CHENNAI</p>
-          <span className="font-grotesk text-[9px] tracking-wider text-szn-cream/40 uppercase mt-2 block truncate">
-            {venueNotice}
+          <p className="font-anton text-4xl md:text-5xl text-szn-cream">{stats.totalRSVPs}</p>
+          <span className="font-grotesk text-[9px] tracking-wider text-szn-magenta uppercase mt-2 block">
+            All-time RSVPs
           </span>
         </div>
 
@@ -370,10 +389,23 @@ export default function AdminPage() {
             <CheckCircle2 size={16} className="text-szn-magenta" />
           </div>
           <p className="font-anton text-4xl md:text-5xl text-szn-magenta">
-            {Object.values(checkedInMap).filter(Boolean).length}
+            {stats.checkedInCount}
           </p>
           <span className="font-grotesk text-[9px] tracking-wider text-szn-cream/40 uppercase mt-2 block">
-            Door check-in status
+            Door check-ins today
+          </span>
+        </div>
+
+        <div className="border border-white/10 bg-szn-charcoal p-6 relative overflow-hidden">
+          <div className="flex justify-between items-start mb-2">
+            <span className="font-grotesk text-[10px] tracking-widest uppercase text-szn-cream/40">TOTAL REVENUE</span>
+            <CreditCard size={16} className="text-szn-magenta" />
+          </div>
+          <p className="font-anton text-4xl md:text-5xl text-szn-cream">
+            ₹{stats.totalRevenue}
+          </p>
+          <span className="font-grotesk text-[9px] tracking-wider text-szn-cream/40 uppercase mt-2 block">
+            Collected via Stripe
           </span>
         </div>
       </div>
