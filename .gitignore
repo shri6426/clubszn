@@ -24,6 +24,12 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Database
+*.sqlite-shm
+*.sqlite-wal
+*.db-shm
+*.db-wal
+
 # Editor / OS
 .vscode/*
 !.vscode/extensions.json

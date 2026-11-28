@@ -76,7 +76,7 @@ const SEED_GUESTS: Booking[] = [
 ];
 
 export default function AdminPage() {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, authFetch } = useAuth();
   const navigate = useNavigate();
 
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -85,6 +85,7 @@ export default function AdminPage() {
   const [checkedInMap, setCheckedInMap] = useState<Record<string, boolean>>({});
   const [showAddModal, setShowAddModal] = useState(false);
   const [newAttendee, setNewAttendee] = useState({ name: '', email: '', phone: '', tier: 'EARLY ACCESS RSVP (FREE)' });
+  const [loading, setLoading] = useState(false);
 
   // Event editable state
   const turfEvent = events[0];
@@ -100,10 +101,49 @@ export default function AdminPage() {
     }
   }, [user, navigate]);
 
-  // Load bookings
-  const loadGuestList = () => {
+  // Load bookings from SQLite backend API with fallback
+  const loadGuestList = async () => {
+    try {
+      setLoading(true);
+      const res = await authFetch('/api/admin/bookings');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.bookings) && data.bookings.length > 0) {
+          const map: Record<string, boolean> = {};
+          const serverGuests: Booking[] = data.bookings.map((b: any) => {
+            const isCheck = b.status === 'checked_in';
+            map[b.id] = isCheck;
+            return {
+              id: b.id,
+              eventId: b.event_id || b.eventId || 'turf-szn-01',
+              eventTitle: b.event_title || b.eventTitle || 'TURF SZN',
+              eventDate: b.event_date || b.eventDate || 'DATES ANNOUNCING SOON',
+              eventTime: b.event_time || b.eventTime || 'EVENING — TIME TBA',
+              eventVenue: b.event_venue || b.eventVenue || 'TURF ARENA — REVEALING SOON',
+              ticketTier: b.ticket_tier || b.ticketTier || 'EARLY ACCESS RSVP (FREE)',
+              ticketPrice: b.ticket_price !== undefined ? b.ticket_price : (b.ticketPrice || 0),
+              quantity: b.quantity || 1,
+              attendeeName: b.attendee_name || b.attendeeName || 'Guest',
+              email: b.email,
+              phone: b.phone || '+91 00000 00000',
+              bookingDate: b.created_at || b.bookingDate || new Date().toISOString(),
+              status: b.status || 'upcoming',
+              total: b.total !== undefined ? b.total : 0,
+            };
+          });
+          setCheckedInMap(map);
+          setBookings(serverGuests);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('Admin API fetch failed, fallback to local/seed:', err);
+    } finally {
+      setLoading(false);
+    }
+
+    // Fallback to local storage + SEED_GUESTS
     const local = getBookings();
-    // Combine with seed guests avoiding duplicate IDs
     const combined = [...local];
     SEED_GUESTS.forEach((s) => {
       if (!combined.some((b) => b.id === s.id)) {
@@ -133,16 +173,29 @@ export default function AdminPage() {
     return matchesSearch && matchesTier;
   });
 
-  const toggleCheckIn = (id: string) => {
-    setCheckedInMap((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleCheckIn = async (id: string) => {
+    const nextVal = !checkedInMap[id];
+    setCheckedInMap((prev) => ({ ...prev, [id]: nextVal }));
+    setBookings((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, status: nextVal ? 'checked_in' : 'upcoming' } : b))
+    );
+
+    try {
+      await authFetch(`/api/admin/bookings/${id}/checkin`, {
+        method: 'PATCH',
+      });
+    } catch (err) {
+      console.warn('Checkin sync error:', err);
+    }
   };
 
-  const handleAddManualGuest = (e: React.FormEvent) => {
+  const handleAddManualGuest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAttendee.name || !newAttendee.email) return;
 
+    const id = generateBookingId();
     const newBooking: Booking = {
-      id: generateBookingId(),
+      id,
       eventId: turfEvent?.id || 'turf-szn-01',
       eventTitle: turfEvent?.title || 'TURF SZN',
       eventDate: dateNotice,
@@ -162,6 +215,17 @@ export default function AdminPage() {
     saveBooking(newBooking);
     setBookings((prev) => [newBooking, ...prev]);
     setShowAddModal(false);
+
+    try {
+      await authFetch('/api/admin/bookings/manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newBooking),
+      });
+    } catch (err) {
+      console.warn('Manual guest API error:', err);
+    }
+
     setNewAttendee({ name: '', email: '', phone: '', tier: 'EARLY ACCESS RSVP (FREE)' });
   };
 
@@ -180,10 +244,24 @@ export default function AdminPage() {
     document.body.removeChild(link);
   };
 
-  const handleSaveEventDetails = () => {
+  const handleSaveEventDetails = async () => {
     setIsEditingEvent(false);
     setSaveBanner(true);
     setTimeout(() => setSaveBanner(false), 3000);
+
+    try {
+      await authFetch('/api/admin/events/turf-szn-01', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          venue: venueNotice,
+          date: dateNotice,
+          location: 'Chennai, India',
+        }),
+      });
+    } catch (err) {
+      console.warn('Event update API error:', err);
+    }
   };
 
   return (
@@ -221,6 +299,15 @@ export default function AdminPage() {
             <Shield size={14} className="text-szn-magenta" />
             <span className="font-dm text-xs text-szn-cream/80">{user.email}</span>
           </div>
+
+          <button
+            onClick={loadGuestList}
+            disabled={loading}
+            title="Refresh database guestlist"
+            className="border border-white/15 hover:border-szn-magenta px-3 py-2 text-xs font-grotesk uppercase tracking-wider text-szn-cream/70 hover:text-szn-cream transition-colors flex items-center gap-1.5"
+          >
+            <RefreshCw size={12} className={loading ? 'animate-spin text-szn-magenta' : ''} /> REFRESH
+          </button>
 
           <Link
             to="/"

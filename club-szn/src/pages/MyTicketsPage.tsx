@@ -1,27 +1,123 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Ticket, Download, Clock } from 'lucide-react';
-import { getBookings } from '../data/bookings';
+import { Link, useNavigate } from 'react-router-dom';
+import { Calendar, MapPin, Ticket, Download, Clock, LogIn, RefreshCw, User as UserIcon } from 'lucide-react';
+import { getBookings, type Booking } from '../data/bookings';
+import { useAuth } from '../context/AuthContext';
 
 export default function MyTicketsPage() {
+  const { user, authFetch } = useAuth();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
-  const bookings = getBookings();
-  const filtered = bookings.filter(b => b.status === tab);
+  const [bookings, setBookings] = useState<Booking[]>(() => getBookings());
+  const [loading, setLoading] = useState(false);
+
+  const fetchUserTickets = async () => {
+    const local = getBookings();
+    if (!user) {
+      setBookings(local);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await authFetch('/api/bookings/my-tickets');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.tickets)) {
+          const serverTickets: Booking[] = data.tickets.map((t: any) => ({
+            id: t.id,
+            eventId: t.event_id || t.eventId || 'turf-szn-01',
+            eventTitle: t.event_title || t.eventTitle || 'TURF SZN',
+            eventDate: t.event_date || t.eventDate || 'DATES ANNOUNCING SOON',
+            eventTime: t.event_time || t.eventTime || 'EVENING — TIME TBA',
+            eventVenue: t.event_venue || t.eventVenue || 'TURF ARENA — REVEALING SOON',
+            ticketTier: t.ticket_tier || t.ticketTier || 'EARLY ACCESS RSVP (FREE)',
+            ticketPrice: t.ticket_price !== undefined ? t.ticket_price : (t.ticketPrice || 0),
+            quantity: t.quantity || 1,
+            attendeeName: t.attendee_name || t.attendeeName || user.name,
+            email: t.email || user.email,
+            phone: t.phone || '',
+            bookingDate: t.created_at || t.bookingDate || new Date().toISOString(),
+            status: t.status === 'checked_in' || t.status === 'upcoming' ? 'upcoming' : 'past',
+            total: t.total !== undefined ? t.total : 0,
+          }));
+
+          // Merge server tickets with any local unsynced tickets
+          const combined = [...serverTickets];
+          local.forEach((l) => {
+            if (!combined.some((c) => c.id === l.id)) {
+              combined.push(l);
+            }
+          });
+
+          setBookings(combined);
+        }
+      }
+    } catch (err) {
+      console.warn('API fetch failed, falling back to local cache:', err);
+      setBookings(local);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserTickets();
+  }, [user]);
+
+  const filtered = bookings.filter((b) => b.status === tab);
 
   return (
     <div className="min-h-screen bg-szn-black pt-28 pb-20 px-6 md:px-10">
       {/* Header */}
-      <div className="mb-10">
-        <span className="font-grotesk text-[10px] tracking-widest uppercase text-szn-cream/30 block mb-4">MY BOOKINGS</span>
-        <motion.h1
-          className="font-anton text-[clamp(3rem,12vw,10rem)] leading-[0.88] tracking-tighter uppercase text-szn-cream mb-2"
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          MY <span className="text-szn-magenta">TICKETS</span>
-        </motion.h1>
+      <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <span className="font-grotesk text-[10px] tracking-widest uppercase text-szn-cream/30 block mb-4">
+            MY SZN PASSES
+          </span>
+          <motion.h1
+            className="font-anton text-[clamp(3rem,12vw,10rem)] leading-[0.88] tracking-tighter uppercase text-szn-cream mb-2"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            MY <span className="text-szn-magenta">TICKETS</span>
+          </motion.h1>
+        </div>
+
+        {/* User bar / Quick actions */}
+        <div className="flex items-center gap-3">
+          {user ? (
+            <div className="border border-white/10 bg-szn-charcoal px-4 py-2 flex items-center gap-3">
+              <UserIcon size={14} className="text-szn-magenta" />
+              <div>
+                <span className="font-grotesk text-[9px] uppercase tracking-wider text-szn-cream/40 block">
+                  ACCOUNT
+                </span>
+                <span className="font-dm text-xs text-szn-cream font-medium">
+                  {user.email}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => navigate('/login', { state: { from: { pathname: '/my-tickets' } } })}
+              className="border border-szn-magenta text-szn-magenta px-4 py-2.5 font-grotesk text-xs tracking-widest uppercase font-bold hover:bg-szn-magenta hover:text-szn-black transition-colors flex items-center gap-2"
+            >
+              <LogIn size={13} /> SIGN IN TO SYNC
+            </button>
+          )}
+
+          <button
+            onClick={fetchUserTickets}
+            disabled={loading}
+            title="Refresh tickets"
+            className="border border-white/10 p-2.5 text-szn-cream/60 hover:text-szn-cream hover:border-szn-magenta transition-colors"
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin text-szn-magenta' : ''} />
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}

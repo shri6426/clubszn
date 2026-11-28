@@ -12,7 +12,7 @@ export interface Booking {
   email: string;
   phone: string;
   bookingDate: string;
-  status: 'upcoming' | 'past';
+  status: 'upcoming' | 'past' | 'checked_in';
   total: number;
 }
 

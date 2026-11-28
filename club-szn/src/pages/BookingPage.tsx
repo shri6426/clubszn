@@ -8,9 +8,10 @@ import {
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js';
-import { ArrowLeft, ArrowRight, Check, AlertCircle, Lock, CreditCard } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, AlertCircle, Lock, CreditCard, LogIn } from 'lucide-react';
 import { events } from '../data/events';
 import { saveBooking, generateBookingId } from '../data/bookings';
+import { useAuth } from '../context/AuthContext';
 
 // ─── Stripe setup ────────────────────────────────────────────────────────────
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? '');
@@ -430,17 +431,35 @@ export default function BookingPage() {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user, authFetch, loginWithGoogle } = useAuth();
 
   const event = events.find(e => e.slug === slug);
   const tierIndex = parseInt(searchParams.get('tier') ?? '0');
   const qty = parseInt(searchParams.get('qty') ?? '1');
 
   const [step, setStep] = useState<Step>('details');
-  const [form, setForm] = useState<AttendeeForm>({ name: '', email: '', phone: '' });
+  const [form, setForm] = useState<AttendeeForm>({
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: '',
+  });
   const [errors, setErrors] = useState<Partial<AttendeeForm>>({});
   const [bookingId, setBookingId] = useState('');
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => { if (!event) navigate('/events'); }, [event, navigate]);
+
+  // Sync logged in user details if user signs in while on page
+  useEffect(() => {
+    if (user) {
+      setForm((prev) => ({
+        ...prev,
+        name: prev.name || user.name || '',
+        email: prev.email || user.email || '',
+      }));
+    }
+  }, [user]);
+
   if (!event) return null;
 
   const tier = event.tickets[tierIndex] ?? event.tickets[0];
@@ -460,9 +479,9 @@ export default function BookingPage() {
     if (validate()) setStep('payment');
   };
 
-  const handleSuccess = (id: string) => {
+  const handleSuccess = async (id: string) => {
     setBookingId(id);
-    saveBooking({
+    const bookingData = {
       id,
       eventId: event.id,
       eventTitle: event.title,
@@ -476,10 +495,37 @@ export default function BookingPage() {
       email: form.email,
       phone: form.phone,
       bookingDate: new Date().toISOString(),
-      status: 'upcoming',
+      status: 'upcoming' as const,
       total,
-    });
+    };
+
+    // Save to local storage for fast cached access
+    saveBooking(bookingData);
+
+    // Save to SQLite backend database via authenticated API
+    try {
+      await authFetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bookingData),
+      });
+    } catch (err) {
+      console.warn('Backend sync error (offline/local fallback active):', err);
+    }
+
     setStep('confirm');
+  };
+
+  const handleQuickGoogle = async () => {
+    setGoogleLoading(true);
+    try {
+      const res = await loginWithGoogle();
+      if (res.success) {
+        // user updated by context
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   const steps: Step[] = ['details', 'payment', 'confirm'];
@@ -532,9 +578,63 @@ export default function BookingPage() {
                 exit={{ opacity: 0, x: 20 }}
               >
                 <span className="font-grotesk text-[10px] tracking-widest uppercase text-szn-magenta block mb-2">STEP 01</span>
-                <h2 className="font-anton text-4xl md:text-6xl tracking-tighter uppercase text-szn-cream mb-10">
+                <h2 className="font-anton text-4xl md:text-6xl tracking-tighter uppercase text-szn-cream mb-6">
                   YOUR DETAILS
                 </h2>
+
+                {/* Account status / Login gate */}
+                {user ? (
+                  <div className="border border-szn-magenta/40 bg-szn-magenta/5 p-4 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-szn-magenta text-szn-black font-anton flex items-center justify-center text-sm font-bold shrink-0">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <span className="font-grotesk text-[9px] tracking-widest uppercase text-szn-magenta block">CONNECTED SZN ACCOUNT</span>
+                        <span className="font-dm text-xs text-szn-cream font-medium">{user.name} ({user.email})</span>
+                      </div>
+                    </div>
+                    <span className="font-grotesk text-[9px] tracking-widest uppercase bg-szn-magenta/20 text-szn-magenta px-2.5 py-1 w-fit">
+                      AUTO-LINKED TO TICKETS
+                    </span>
+                  </div>
+                ) : (
+                  <div className="border border-white/10 bg-szn-charcoal p-5 mb-8">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <span className="font-grotesk text-[9px] tracking-widest uppercase text-szn-magenta block mb-1">
+                          SZN MEMBER ACCESS
+                        </span>
+                        <p className="font-dm text-xs text-szn-cream/70">
+                          Sign in to save this reservation directly to your SZN account.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleQuickGoogle}
+                          disabled={googleLoading}
+                          className="font-grotesk text-[10px] tracking-widest uppercase bg-white text-black font-bold px-3 py-2 hover:bg-szn-cream transition-colors flex items-center gap-1.5"
+                        >
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                          </svg>
+                          {googleLoading ? 'LOGGING IN...' : 'GOOGLE'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => navigate('/login', { state: { from: { pathname: `/book/${slug}` } } })}
+                          className="font-grotesk text-[10px] tracking-widest uppercase border border-white/20 text-szn-cream px-3 py-2 hover:border-szn-magenta hover:text-szn-magenta transition-colors flex items-center gap-1.5"
+                        >
+                          <LogIn size={11} /> SIGN IN
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-5">
                   <div>
