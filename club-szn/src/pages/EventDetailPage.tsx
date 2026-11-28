@@ -147,8 +147,8 @@ export default function EventDetailPage() {
             <span className="font-grotesk text-[10px] tracking-widest uppercase text-szn-magenta block mb-4">EXPERIENCE</span>
             <div className="grid grid-cols-3 gap-2">
               {[event.imageUrl,
-                'https://images.unsplash.com/photo-1529543544282-ea669407fca3?w=400&q=80',
-                'https://images.unsplash.com/photo-1543079467-a9ea9d8e1ef4?w=400&q=80',
+                '/gallery/img_0453.jpg',
+                '/gallery/img_0618.jpg',
               ].map((img, i) => (
                 <div key={i} className="overflow-hidden" style={{ height: 'clamp(80px,12vw,160px)' }}>
                   <img

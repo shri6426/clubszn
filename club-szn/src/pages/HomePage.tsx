@@ -15,8 +15,8 @@ function HeroSection() {
       {/* Background image */}
       <motion.div className="absolute inset-0 z-0" style={{ y }}>
         <img
-          src="https://images.unsplash.com/photo-1529543544282-ea669407fca3?w=1400&q=80"
-          alt="People socializing"
+          src="/gallery/img_0618.jpg"
+          alt="Club SZN Turf Action"
           className="w-full h-full object-cover img-bw-halftone opacity-50"
         />
         {/* Halftone dot overlay */}
@@ -126,8 +126,8 @@ function BrandIntroSection() {
         {/* Left — image */}
         <div className="relative overflow-hidden min-h-[50vw] md:min-h-0">
           <img
-            src="https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=800&q=80"
-            alt="Community"
+            src="/gallery/img_0687.jpg"
+            alt="Club SZN Community"
             className="w-full h-full object-cover img-bw absolute inset-0"
           />
           <div
@@ -195,12 +195,12 @@ function BrandIntroSection() {
 
 // Section 03 — What We Do
 const categories = [
-  { num: '01', label: 'SOCIAL MEETUPS', desc: 'Meet new people in a natural, comfortable environment.', img: 'https://images.unsplash.com/photo-1529543544282-ea669407fca3?w=600&q=80' },
-  { num: '02', label: 'PARTIES & THEMED EVENTS', desc: 'Full-production parties and themed nights.', img: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&q=80' },
-  { num: '03', label: 'GAMES & CHALLENGES', desc: 'Team games, trivia and competitive chaos.', img: 'https://images.unsplash.com/photo-1543079467-a9ea9d8e1ef4?w=600&q=80' },
-  { num: '04', label: 'MUSIC & ENTERTAINMENT', desc: 'Live sets, DJ nights and curated soundscapes.', img: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80' },
-  { num: '05', label: 'FESTIVAL CELEBRATIONS', desc: 'Mark every season with something memorable.', img: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600&q=80' },
-  { num: '06', label: 'COMMUNITY EXPERIENCES', desc: 'Shared meals, potlucks and community moments.', img: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&q=80' },
+  { num: '01', label: 'SOCIAL MEETUPS', desc: 'Meet new people in a natural, comfortable environment.', img: '/gallery/img_0443.jpg' },
+  { num: '02', label: 'PARTIES & THEMED EVENTS', desc: 'Full-production parties and themed nights.', img: '/gallery/img_0595.jpg' },
+  { num: '03', label: 'GAMES & CHALLENGES', desc: 'Team games, trivia and competitive chaos.', img: '/gallery/img_0453.jpg' },
+  { num: '04', label: 'MUSIC & ENTERTAINMENT', desc: 'Live sets, DJ nights and curated soundscapes.', img: '/gallery/img_0619.jpg' },
+  { num: '05', label: 'FESTIVAL CELEBRATIONS', desc: 'Mark every season with something memorable.', img: '/gallery/img_0547.jpg' },
+  { num: '06', label: 'COMMUNITY EXPERIENCES', desc: 'Shared meals, potlucks and community moments.', img: '/gallery/img_0564.jpg' },
 ];
 
 function WhatWeDoSection() {
@@ -421,8 +421,8 @@ function SocialProofSection() {
       {/* BG image */}
       <div className="absolute inset-0 z-0">
         <img
-          src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1400&q=80"
-          alt="Crowd"
+          src="/gallery/img_0668.jpg"
+          alt="Club SZN Crowd"
           className="w-full h-full object-cover img-bw opacity-25"
         />
         <div className="absolute inset-0 bg-szn-black/50" />
@@ -595,8 +595,8 @@ function AboutSection() {
         {/* Image */}
         <div className="relative overflow-hidden min-h-[400px]">
           <img
-            src="https://images.unsplash.com/photo-1536745511163-cc7f06aa8b88?w=800&q=80"
-            alt="CLUB SZN"
+            src="/gallery/img_0465.jpg"
+            alt="CLUB SZN Players"
             className="w-full h-full object-cover img-bw absolute inset-0"
             style={{ filter: 'grayscale(100%) contrast(1.2) brightness(0.6)' }}
           />
