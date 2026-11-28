@@ -30,6 +30,9 @@ pnpm-debug.log*
 *.db-shm
 *.db-wal
 
+# Raw source assets
+/gallery/
+
 # Editor / OS
 .vscode/*
 !.vscode/extensions.json

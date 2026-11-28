@@ -466,10 +466,10 @@ function SocialProofSection() {
 // Section 06 — The Experience
 function ExperienceSection() {
   const images = [
-    'https://images.unsplash.com/photo-1529543544282-ea669407fca3?w=600&q=80',
-    'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&q=80',
-    'https://images.unsplash.com/photo-1543079467-a9ea9d8e1ef4?w=600&q=80',
-    'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600&q=80',
+    '/gallery/img_0388.jpg',
+    '/gallery/img_0453.jpg',
+    '/gallery/img_0547.jpg',
+    '/gallery/img_0595.jpg',
   ];
 
   return (
